@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#e7f0df">
+<title>こころのタイプ診断</title>
+<style>
+:root{--green:#52745c;--deep:#304b38;--cream:#fbfaf4;--mint:#e7f0df;--ink:#26352b}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,#e7f0df,#f8f6ec 58%,#edf1e8);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;min-height:100vh}
+main{width:min(100% - 28px,620px);margin:0 auto;padding:34px 0 48px}
+header{text-align:center;padding:18px 8px 24px}
+.kicker{font-size:.78rem;letter-spacing:.18em;color:var(--green);font-weight:700}
+h1{font-size:clamp(1.8rem,7vw,2.6rem);margin:10px 0 8px;color:var(--deep);letter-spacing:.04em}
+.subtitle{color:#657267;margin:0;font-size:.95rem}
+.card{background:rgba(255,255,255,.92);border:1px solid #dce5d8;border-radius:22px;padding:22px;box-shadow:0 10px 30px #334b3810}
+.notice{font-size:.82rem;line-height:1.7;color:#657267;background:#f3f6ef;padding:12px 14px;border-radius:13px;margin-bottom:20px}
+.progress-wrap{display:flex;align-items:center;justify-content:space-between;font-size:.82rem;color:#657267;margin:0 0 9px}
+.progress{height:7px;background:#e9eee6;border-radius:99px;overflow:hidden;margin-bottom:22px}
+.progress span{display:block;height:100%;width:0;background:var(--green);transition:width .2s}
+.question{font-size:1.12rem;line-height:1.6;font-weight:750;margin:0 0 16px}
+.answers{display:grid;gap:10px}
+.answer{display:block;width:100%;text-align:left;border:1.5px solid #dce5d8;background:#fff;border-radius:14px;padding:14px 15px;font:inherit;color:var(--ink);cursor:pointer;line-height:1.5;transition:.15s}
+.answer:hover{border-color:#78947c;background:#f7faf4}
+.answer:focus-visible,button:focus-visible{outline:3px solid #a7c6a5;outline-offset:3px}
+.answer.selected{border-color:var(--green);background:#edf4e9;box-shadow:inset 0 0 0 1px var(--green)}
+.actions{display:flex;gap:10px;margin-top:22px}
+button.primary,button.secondary{border:0;border-radius:13px;padding:13px 18px;font:inherit;font-weight:700;cursor:pointer}
+.primary{background:var(--green);color:white;flex:1}
+.primary:disabled{opacity:.38;cursor:not-allowed}
+.secondary{background:#eef2eb;color:var(--deep)}
+.result-mark{font-size:2.4rem}
+.result-name{font-size:1.8rem;color:var(--deep);margin:6px 0 12px}
+.result-copy{line-height:1.85}
+.advice{background:#f1f5ed;border-radius:14px;padding:15px;margin-top:18px;line-height:1.7}
+.small{font-size:.78rem;color:#748075;line-height:1.7;margin-top:18px}
+.hidden{display:none}
+footer{text-align:center;color:#7c887e;font-size:.75rem;margin-top:18px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="kicker">SELF CHECK · 5 QUESTIONS</div>
+  <h1>こころのタイプ診断</h1>
+  <p class="subtitle">5つの質問から、今の自分の傾向を見てみよう。</p>
+</header>
+<section class="card" id="quiz">
+  <div class="notice">正解・不正解はありません。深く考えすぎず、今の自分に近いものを選んでください。回答は保存・送信されません。</div>
+  <div class="progress-wrap"><span id="step">質問 1 / 5</span><span id="percent">20%</span></div>
+  <div class="progress"><span id="bar"></span></div>
+  <h2 class="question" id="question"></h2>
+  <div class="answers" id="answers"></div>
+  <div class="actions">
+    <button class="secondary" id="back" type="button">戻る</button>
+    <button class="primary" id="next" type="button" disabled>次へ</button>
+  </div>
+</section>
+<section class="card hidden" id="result" aria-live="polite">
+  <div class="result-mark" id="mark">🌿</div>
+  <div class="kicker">YOUR RESULT</div>
+  <h2 class="result-name" id="resultName"></h2>
+  <p class="result-copy" id="description"></p>
+  <div class="advice"><strong>ちょっとしたヒント</strong><br><span id="advice"></span></div>
+  <p class="small">このテストは授業用に作成した架空の心理テストです。医学的な診断や性格の判定ではありません。精神疾患の有無は、この結果から判断できません。</p>
+  <button class="primary" id="retry" type="button" style="width:100%;margin-top:10px">もう一度やってみる</button>
+</section>
+<footer>こころのタイプ診断 · 授業用</footer>
+</main>
+<script>
+const questions = [
+ {q:"友達からの返信がなかなか来ないとき、どう思う？",a:["何かあったのかな？と心配になる","忙しいのだろうと思う","自分が何かしたのか考える","特に気にしない"]},
+ {q:"大事な予定の前日、あなたは？",a:["楽しみでワクワクする","失敗しないか不安になる","何度も準備を確認する","あまり考えず普段通り過ごす"]},
+ {q:"嫌なことがあったとき、どうする？",a:["誰かに話を聞いてもらう","一人でじっくり考える","別のことをして気を紛らわせる","気持ちを表に出さず我慢する"]},
+ {q:"急に予定が変更になったら？",a:["少し焦るけれど対応する","かなりストレスを感じる","新しい予定を楽しむ","どうでもよくなってしまう"]},
+ {q:"最近の自分に近いものは？",a:["いろいろなことを考えすぎる","周りの人に気を遣いすぎる","何事にもやる気が出にくい","比較的落ち着いて過ごせている"]}
+];
+const types = [
+ {name:"心配性タイプ",mark:"☁️",desc:"先のことをよく考え、慎重に行動する傾向があるようです。心配事があるときは、一人で抱え込まず、信頼できる人に話してみるのもよい方法です。",advice:"今できることを小さく分けて、一つずつ取り組んでみよう。"},
+ {name:"気配りタイプ",mark:"🍀",desc:"周囲の人の気持ちや様子に目を向ける傾向があるようです。相手を大切にするのと同じように、自分の気持ちにも目を向けてみましょう。",advice:"自分の希望や気持ちを言葉にする時間も大切にしよう。"},
+ {name:"考え込みタイプ",mark:"🌙",desc:"物事をじっくり考える傾向があるようです。考えることは強みですが、頭がいっぱいになったときには休憩や気分転換も役立ちます。",advice:"考える時間と、何も考えずに休む時間を作ってみよう。"},
+ {name:"マイペースタイプ",mark:"🌿",desc:"自分のペースを大切にする傾向があるようです。周りと比べすぎず、自分に合った過ごし方を見つけていきましょう。",advice:"落ち着いて過ごせているときも、自分の調子の変化に気づいてみよう。"}
+];
+let current=0, selected=Array(questions.length).fill(null);
+const $=id=>document.getElementById(id);
+function render(){
+ const q=questions[current];
+ $("step").textContent=`質問 ${current+1} / ${questions.length}`;
+ $("percent").textContent=`${Math.round((current+1)/questions.length*100)}%`;
+ $("bar").style.width=`${(current+1)/questions.length*100}%`;
+ $("question").textContent=`Q${current+1}. ${q.q}`;
+ $("answers").innerHTML="";
+ q.a.forEach((label,i)=>{
+   const b=document.createElement("button");
+   b.type="button";b.className="answer"+(selected[current]===i?" selected":"");
+   b.textContent=label;b.setAttribute("aria-pressed",selected[current]===i?"true":"false");
+   b.addEventListener("click",()=>{selected[current]=i;renderAnswers();});
+   $("answers").appendChild(b);
+ });
+ $("back").disabled=current===0;
+ $("back").style.opacity=current===0?".35":"1";
+ $("next").textContent=current===questions.length-1?"結果を見る":"次へ";
+ $("next").disabled=selected[current]===null;
+}
+function renderAnswers(){
+ [...$("answers").children].forEach((b,i)=>{
+  b.classList.toggle("selected",selected[current]===i);
+  b.setAttribute("aria-pressed",selected[current]===i?"true":"false");
+ });
+ $("next").disabled=selected[current]===null;
+}
+$("back").addEventListener("click",()=>{if(current>0){current--;render();}});
+$("next").addEventListener("click",()=>{
+ if(selected[current]===null)return;
+ if(current<questions.length-1){current++;render();}
+ else showResult();
+});
+function showResult(){
+ const scores=[0,0,0,0];
+ selected.forEach(v=>scores[v]++);
+ const max=Math.max(...scores);
+ const winner=scores.indexOf(max);
+ const t=types[winner];
+ $("mark").textContent=t.mark;$("resultName").textContent=t.name;
+ $("description").textContent=t.desc;$("advice").textContent=t.advice;
+ $("quiz").classList.add("hidden");$("result").classList.remove("hidden");
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+$("retry").addEventListener("click",()=>{
+ current=0;selected=Array(questions.length).fill(null);
+ $("result").classList.add("hidden");$("quiz").classList.remove("hidden");render();
+ window.scrollTo({top:0,behavior:"smooth"});
+});
+render();
+</script>
+</body>
+</html>
